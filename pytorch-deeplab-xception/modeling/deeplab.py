@@ -38,6 +38,7 @@ class DeepLab(nn.Module):
 
     def forward(self, input):
         x, low_level_feat = self.backbone(input)
+        pdb.set_trace()
         # x = F.interpolate(x, size=low_level_feat.size()[2:], mode='bilinear', align_corners=True)
         low_level_feat = self.link_conv(low_level_feat)
         x = torch.cat((x, low_level_feat), dim=1)
