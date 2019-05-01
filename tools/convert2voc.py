@@ -31,6 +31,7 @@ list_folder = dest_datadir + '/ImageSets'
 def _copy(src_image, dest_path):
     shutil.copy(src_image, dest_path)
 
+
 def _resize(src_image, dest_path):
     img = cv2.imread(src_image)
 
@@ -41,44 +42,42 @@ def _resize(src_image, dest_path):
     name = os.path.basename(src_image)
     cv2.imwrite(os.path.join(dest_path, name), img)
 
+
 def get_box(label_df, im_name):
+    boxes = []
     im_label = label_df[label_df.filename == im_name]
     for index, row in im_label.iterrows():
-        print(type(row['X1']))
         xmin = min(row['X1'], row['X2'], row['X3'], row['X4'])
+        ymin = min(row['Y1'], row['Y2'], row['Y3'], row['Y4'])
         xmax = max(row['X1'], row['X2'], row['X3'], row['X4'])
+        ymax = max(row['Y1'], row['Y2'], row['Y3'], row['Y4'])
+        boxes.append([xmin, ymin, xmax, ymax])
+    return np.array(boxes)
 
-# mask
-def _generate_mask(img_path):
+
+def _generate_mask(img_path, label_df):
     try:
         # image mask
-        img_id = os.path.split(img_path)[-1][:-4]
-        im_data = anno_func.load_img(annos, src_datadir, img_id)
-        mask = anno_func.load_mask(annos, src_datadir, img_id, im_data)
+        img_name = os.path.split(img_path)[-1]
 
-        height, width = mask.shape[:2]
-        size = (int(width), int(height))
+        width, height = 3200, 1800
+        # chip mask 40x23, model input size 640x320
+        mask_w, mask_h = 40, 23
 
-        mask = cv2.resize(mask, size)
-        maskname = os.path.join(segmentation_dir, img_id + '.png')
-        cv2.imwrite(maskname, mask)
-
-        # chip mask 30x30
-        chip_mask = np.zeros((30, 30), dtype=int)
-        boxes = get_box(annos, img_id)
+        region_mask = np.zeros((mask_h, mask_w), dtype=np.uint8)
+        boxes = get_box(label_df, img_name)
         for box in boxes:
-            xmin, ymin, xmax, ymax = np.floor(box * 30).astype(np.int32)
-            chip_mask[ymin : ymax+1, xmin : xmax+1] = 1
-        maskname = os.path.join(segmentation_dir, img_id + '_chip.png')
-        cv2.imwrite(maskname, chip_mask)
+            xmin = np.floor(1.0 * box[0] / width * mask_w).astype(np.int32)
+            ymin = np.floor(1.0 * box[1] / height * mask_h).astype(np.int32)
+            xmax = np.floor(1.0 * box[2] / width * mask_w).astype(np.int32)
+            ymax = np.floor(1.0 * box[3] / height * mask_h).astype(np.int32)
+            region_mask[ymin : ymax+1, xmin : xmax+1] = 1
+        maskname = os.path.join(segmentation_dir, img_name[:-4] + '_region.png')
+        cv2.imwrite(maskname, region_mask)
 
     except Exception as e:
         print(e)
 
-# print('mask...')
-# with concurrent.futures.ThreadPoolExecutor() as exector:
-#     exector.map(_generate_mask, all_list)
-# _generate_mask(all_list[0])
 
 if __name__ == "__main__":
     if not os.path.exists(dest_datadir):
@@ -92,10 +91,23 @@ if __name__ == "__main__":
     train_list, val_list = train_list[:-2000], train_list[-2000:]
     all_list = train_list + val_list
 
-    # print('copy image....\n')
+    # write list file
+    with open(os.path.join(list_folder, 'train.txt'), 'w') as f:
+        temp = [os.path.basename(x)+'\n' for x in train_list]
+        f.writelines(temp)
+    with open(os.path.join(list_folder, 'val.txt'), 'w') as f:
+        temp = [os.path.basename(x)+'\n' for x in val_list]
+        f.writelines(temp)
+
+    # print('copy image....')
     # with concurrent.futures.ThreadPoolExecutor() as exector:
     #     exector.map(_copy, all_list, [image_dir]*len(all_list))
+    # print('done.')
 
     # read label
     df = pd.read_csv(src_annotation)
-    get_box(df, '000015983ee24b9bb06f0a493e40d396.jpg')
+
+    # print('generate mask...')
+    # with concurrent.futures.ThreadPoolExecutor() as exector:
+    #     exector.map(_generate_mask, all_list, [df]*len(all_list))
+    # print('done.')
