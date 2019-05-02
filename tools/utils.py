@@ -9,13 +9,25 @@ TT100K_CLASSES = (
     'pr40', 'p5', 'p3', 'i2', 'i4', 'ph4', 'wo', 'pm30', 'ph5', 'p23', 
     'pm20', 'w57', 'w13', 'p19', 'w59', 'il100', 'p6', 'ph4.5')
 
+
+def get_label_box(label_df, im_name):
+    boxes = []
+    im_label = label_df[label_df.filename == im_name]
+    for index, row in im_label.iterrows():
+        xmin = min(row['X1'], row['X2'], row['X3'], row['X4'])
+        ymin = min(row['Y1'], row['Y2'], row['Y3'], row['Y4'])
+        xmax = max(row['X1'], row['X2'], row['X3'], row['X4'])
+        ymax = max(row['Y1'], row['Y2'], row['Y3'], row['Y4'])
+        boxes.append([xmin, ymin, xmax, ymax])
+    return np.array(boxes)
+
 def generate_box_from_mask(mask):
     """
     Args:
         mask: 0/1 array
     """
     box_all = []
-    image, contours, _ = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+    contours, _ = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
     for i in range(len(contours)):
         x, y, w, h = cv.boundingRect(contours[i])
 #if w < 2 and h < 2:
@@ -51,13 +63,14 @@ def enlarge_box(mask_box, image_size, ratio=2):
 def resize_box(box, original_size, dest_size):
     """
     Args:
-        box: [xmin, ymin, xmax, ymax]
-        original_size: int
-        dest_size: int
+        box: array, [xmin, ymin, xmax, ymax]
+        original_size: (width, height)
+        dest_size: (width, height)
     """
-    ratio = dest_size / original_size
-    box = np.array(box) * ratio
-    return list(np.clip(box, 0, dest_size-1).astype(np.int32))
+    h_ratio = 1.0 * dest_size[1] / original_size[1]
+    w_ratio = 1.0 * dest_size[0] / original_size[0]
+    box = np.array(box) * np.array([w_ratio, h_ratio, w_ratio, h_ratio])
+    return list(box.astype(np.int32))
 
 
 def overlap(box1, box2, thresh = 0.75):

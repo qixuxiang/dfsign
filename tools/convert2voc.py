@@ -93,10 +93,10 @@ if __name__ == "__main__":
 
     # write list file
     with open(os.path.join(list_folder, 'train.txt'), 'w') as f:
-        temp = [os.path.basename(x)+'\n' for x in train_list]
+        temp = [os.path.basename(x)[:-4]+'\n' for x in train_list]
         f.writelines(temp)
     with open(os.path.join(list_folder, 'val.txt'), 'w') as f:
-        temp = [os.path.basename(x)+'\n' for x in val_list]
+        temp = [os.path.basename(x)[:-4]+'\n' for x in val_list]
         f.writelines(temp)
 
     # print('copy image....')

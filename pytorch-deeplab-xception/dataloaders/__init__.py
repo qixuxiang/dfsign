@@ -1,4 +1,4 @@
-from dataloaders.datasets import cityscapes, coco, combine_dbs, pascal, sbd, tt100k
+from dataloaders.datasets import cityscapes, coco, combine_dbs, pascal, sbd, dfsign
 from torch.utils.data import DataLoader
 
 def make_data_loader(args, **kwargs):
@@ -17,9 +17,9 @@ def make_data_loader(args, **kwargs):
 
         return train_loader, val_loader, test_loader, num_class
 
-    elif args.dataset == 'tt100k':
-        train_set = tt100k.TT100KSegmentation(args, split='train')
-        val_set = tt100k.TT100KSegmentation(args, split='val')
+    elif args.dataset == 'dfsign':
+        train_set = dfsign.DFSignSegmentation(args, split='train')
+        val_set = dfsign.DFSignSegmentation(args, split='val')
 
         num_class = train_set.NUM_CLASSES
         train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, **kwargs)

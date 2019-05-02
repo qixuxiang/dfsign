@@ -9,7 +9,7 @@ from tqdm import tqdm
 from mypath import Path
 from dataloaders import make_data_loader
 from modeling.deeplab import *
-from dataloaders.datasets import tt100k
+from dataloaders.datasets import dfsign
 from torch.utils.data import DataLoader
 import pdb
 
@@ -18,7 +18,7 @@ class Tester(object):
         self.args = args
         
         # Define Dataloader
-        test_set = tt100k.TT100KSegmentation(args, split='test')
+        test_set = dfsign.DFSignSegmentation(args, split='val')
         self.nclass = test_set.NUM_CLASSES
         self.test_loader = DataLoader(test_set,
                                 batch_size=args.test_batch_size,
@@ -77,7 +77,7 @@ class Tester(object):
     def show_result(self, path, pred):
         import matplotlib.pyplot as plt
         img = cv2.imread(path)
-        img = cv2.resize(img, (self.args.crop_size, self.args.crop_size))
+        img = cv2.resize(img, (self.args.crop_size[0], self.args.crop_size[1]))
         
         plt.figure(figsize=(10, 10))
         plt.subplot(1, 2, 1).imshow(img[:, :, ::-1])
@@ -103,7 +103,7 @@ def main():
                         metavar='N', help='dataloader threads')
     parser.add_argument('--base-size', type=int, default=640,
                         help='base image size')
-    parser.add_argument('--crop-size', type=int, default=640,
+    parser.add_argument('--crop-size', type=str, default='960, 540',
                         help='crop image size')
     parser.add_argument('--test-batch-size', type=int, default=1,
                         metavar='N', help='input batch size for \
@@ -122,6 +122,7 @@ def main():
                         help='put the path to resuming file if needed')
 
     args = parser.parse_args()
+    args.crop_size = tuple([int(s) for s in args.crop_size.split(',')])
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     if args.cuda:
         try:

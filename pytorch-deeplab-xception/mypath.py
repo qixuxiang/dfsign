@@ -12,8 +12,8 @@ class Path(object):
             return '/path/to/datasets/cityscapes/'     # foler that contains leftImg8bit/
         elif dataset == 'coco':
             return '/path/to/datasets/coco/'
-        elif dataset == 'tt100k':
-            return os.path.join(user_home, 'data/TT100K/TT100K_voc')  # folder that contains VOCdevkit/.    
+        elif dataset == 'dfsign':
+            return os.path.join(user_home, 'data/dfsign/dfsign_region_voc')  # folder that contains VOCdevkit/.    
         else:
             print('Dataset {} not available.'.format(dataset))
             raise NotImplementedError

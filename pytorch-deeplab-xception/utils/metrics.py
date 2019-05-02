@@ -1,7 +1,7 @@
 import os
 import numpy as np
-import json
-import utils.tt100k_utils as utils
+import pandas as pd
+import utils.dfsign_utils as utils
 
 class Evaluator(object):
     def __init__(self, num_class):
@@ -11,8 +11,8 @@ class Evaluator(object):
         self.detect_object = []
         self.mask_object = []
         user_home = os.path.expanduser('~')
-        datadir = os.path.join(user_home, 'data/TT100K')
-        self.tt100k_annos = json.loads(open(datadir + '/data/annotations.json').read())
+        datadir = os.path.join(user_home, 'data/dfsign')
+        self.label_df = pd.read_csv(datadir + '/train_label_fix.csv')
 
     def Pixel_Accuracy(self):
         Acc = np.diag(self.confusion_matrix).sum() / self.confusion_matrix.sum()
@@ -54,14 +54,15 @@ class Evaluator(object):
 
     def _generate_count(self, pre_image, paths):
         for mask_img, path in zip(pre_image, paths):
-            imgid = str(path.split('/')[-1][:-4])
-            label_box = utils.get_label_box(self.tt100k_annos, imgid)
+            imgid = str(path.split('/')[-1])
+            label_box = utils.get_label_box(self.label_df, imgid)
 
             height, width = mask_img.shape[:2]
             mask_box = utils.generate_box_from_mask(mask_img.astype(np.uint8))
             mask_box = list(map(utils.resize_box, mask_box,
-                            [width]*len(mask_box), [2048]*len(mask_box)))
-            mask_box = utils.enlarge_box(mask_box, (2048, 2048), ratio=1.3)
+                            [(width, height)]*len(mask_box), 
+                            [(3200, 1800)]*len(mask_box)))
+            mask_box = utils.enlarge_box(mask_box, (3200, 1800), ratio=1.3)
 
             count = 0
             for box1 in label_box:

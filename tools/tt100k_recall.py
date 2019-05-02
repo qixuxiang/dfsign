@@ -6,31 +6,19 @@ import os, sys
 import numpy as np
 import cv2 as cv
 from glob import glob
-import json
 from tqdm import tqdm
 from operator import mul
+import pandas as pd
 import utils
 import pdb
 
 
 user_home = os.path.expanduser('~')
-datadir = os.path.join(user_home, 'data/TT100K')
-label_path = datadir + '/TT100K_voc/SegmentationClass'
-annos_path = datadir + '/data/annotations.json'
-image_path = datadir + '/TT100K_voc/JPEGImages'
-mask_path = os.path.join(user_home, 'codes/gluon-cv/projects/seg/outdir')
-            # 'codes/deeplab-tensorflow/deeplab/datasets/tt100k/exp/vis/raw_segmentation_results')
-
-
-def get_box(annos, imgid):
-    img = annos["imgs"][imgid]
-    box_all = []
-    for obj in img['objects']:
-        box = obj['bbox']
-        box = [int(box['xmin']), int(box['ymin']), int(box['xmax']), int(box['ymax'])]
-        # box = [int(x * 0.3) for x in box]
-        box_all.append(box)
-    return box_all
+datadir = os.path.join(user_home, 'data/dfsign')
+label_path = datadir + '/dfsign_region_voc/SegmentationClass'
+annos_path = datadir + '/train_label_fix.csv'
+image_path = datadir + '/dfsign_region_voc/JPEGImages'
+mask_path = os.path.join(user_home, 'working/dfsign/pytorch-deeplab-xception/run/mask')
 
 
 def _boxvis(mask, mask_box):
@@ -39,8 +27,7 @@ def _boxvis(mask, mask_box):
     for box in mask_box:
         cv.rectangle(binary, (box[0], box[1]), (box[2], box[3]), 100, 2)
     cv.imshow('a', binary)
-    key = cv.waitKey(0)
-    sys.exit(0)
+    cv.waitKey(0)
 
 
 def vis_undetected_image(img_list):
@@ -64,7 +51,7 @@ def vis_undetected_image(img_list):
             break
 
 def main():
-    annos = json.loads(open(annos_path).read())
+    label_df = pd.read_csv(annos_path)
 
     label_object = []
     detect_object = []
@@ -78,18 +65,17 @@ def main():
         image_file = os.path.join(image_path, imgid + '.jpg')
         
         mask_img = cv.imread(raw_file, cv.IMREAD_GRAYSCALE)
-        # mask_img = cv.resize(mask_img, (2048, 2048), interpolation=cv.INTER_LINEAR)
+        height, width = mask_img.shape[:2]
+        
         pixel_num.append(np.sum(mask_img))
 
-        height, width = mask_img.shape[:2]
-
-        label_box = get_box(annos, imgid)
+        label_box = utils.get_label_box(label_df, imgid+'.jpg')
         mask_box = utils.generate_box_from_mask(mask_img)
-        mask_box = list(map(utils.resize_box, mask_box, 
-                        [width]*len(mask_box), [2048]*len(mask_box)))
-        mask_box = utils.enlarge_box(mask_box, (2048, 2048), ratio=2)
+        mask_box = list(map(utils.resize_box, mask_box,
+                            [(width, height)]*len(mask_box), 
+                            [(3200, 1800)]*len(mask_box)))
+        # mask_box = utils.enlarge_box(mask_box, (3200, 1800), ratio=1)
         # _boxvis(mask_img, mask_box)
-        # break
 
         count = 0
         for box1 in label_box:
