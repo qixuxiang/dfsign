@@ -64,24 +64,24 @@ def chip_v2(image, gt_boxes, labels):
         
         for chip_size in chip_size_list:
             # region to random crop around gt
-            region = np.clip( 
-                [box[0] - chip_size, box[1] - chip_size,
-                box[0] + chip_size, box[1] + chip_size],
-                0, 2047)
+            region_xmin = box[0] - chip_size if box[0] - chip_size > 0 else 0
+            region_ymin = box[1] - chip_size if box[1] - chip_size > 0 else 0
+            region_xmax = box[0] + chip_size if box[0] + chip_size < 3199 else 3199
+            region_ymax = box[1] + chip_size if box[1] + chip_size < 1799 else 1799
+            region = np.array([region_xmin, region_ymin, region_xmax, region_ymax])
 
             # random crop
             while True:
                 start_point = 0
                 new_x, new_y = region[0], region[1]
                 if region[2] - region[0] - chip_size > 0:
-                    new_x = region[0] + randint(start_point, region[2] - region[0] - chip_size)
+                    new_x = region[0] + random.randint(start_point, region[2] - region[0] - chip_size)
                 if region[3] - region[1] - chip_size > 0:
-                    new_y = region[1] + randint(start_point, region[3] - region[1] - chip_size)
+                    new_y = region[1] + random.randint(start_point, region[3] - region[1] - chip_size)
                 chip = [new_x, new_y, new_x+chip_size, new_y+chip_size]
                 # abandon partial overlap chip
                 if chip[2] >= box[2] and chip[3] >= box[3]:
                     break
-                start_point += 10
             chip_list.append(np.array(chip))
     
     # chip gt
@@ -167,10 +167,10 @@ def write_chip_and_anno(image, imgid,
     """write chips of one image to disk and make xml annotations
     """
     for i, chip in enumerate(chip_list):
-        img_name = '%d_%d.jpg' % (imgid, i)
-        xml_name = '%d_%d.xml' % (imgid, i)
+        img_name = '%s_%d.jpg' % (imgid, i)
+        xml_name = '%s_%d.xml' % (imgid, i)
 
-        # resize ratio -> 300x300
+        # resize ratio -> 416x416
         ratio = (chip[2] - chip[0]) / 416
         
         chip_img = image[chip[1]:chip[3], chip[0]:chip[2], :].copy()
@@ -194,7 +194,7 @@ def get_box_label(label_df, im_name):
         ymax = max(row['Y1'], row['Y2'], row['Y3'], row['Y4'])
         boxes.append([xmin, ymin, xmax, ymax])
         labels.append(row['type'])
-    return np.array(boxes), labels
+    return np.array(boxes) - 1, labels
 
 
 def generate_imgset(train_list):
@@ -214,12 +214,11 @@ def _progress():
 
 def _worker(imgid, label_df):
     try:
-        # image = cv2.imread(os.path.join(src_traindir, imgid+'.jpg'))
+        image = cv2.imread(os.path.join(src_traindir, imgid+'.jpg'))
         gt_boxes, labels = get_box_label(label_df, imgid+'.jpg')
-        # chip_list, chip_gt_list, chip_label_list = chip_v2(image, gt_boxes, labels)
-        # write_chip_and_anno(image, int(imgid), chip_list, chip_gt_list, chip_label_list)
-        # return len(chip_list)
-        return gt_boxes
+        chip_list, chip_gt_list, chip_label_list = chip_v2(image, gt_boxes, labels)
+        write_chip_and_anno(image, imgid, chip_list, chip_gt_list, chip_label_list)
+        return len(chip_list)
         # _progress()
     except Exception:
         traceback.print_exc()
@@ -242,10 +241,13 @@ def main():
     df = pd.read_csv(src_annotation)
 
     train_chip_ids = []
-    for img_id in tqdm(train_list):
-        chiplen = _worker(img_id, annos)
+    for img_id in train_list:
+        print(img_id)
+        chiplen = _worker(img_id, df)
         for i in range(chiplen):
             train_chip_ids.append('%s_%s' % (img_id, i))
+    
+    generate_imgset(train_chip_ids)
     
     
     # box = np.vstack(train_chip_ids)
@@ -255,7 +257,7 @@ def main():
     # plt.plot(list(range(len(width))), width)
     # plt.show()
 
-    # generate_imgset(train_chip_ids)
+    
     # with open(os.path.join(list_dir, 'train.txt'), 'r') as f:
     #     chip = [x.split('_')[0] for x in f.readlines()]
     # with open(train_ids, 'r') as f:
