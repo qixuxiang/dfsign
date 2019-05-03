@@ -9,7 +9,7 @@ import test  # Import test.py to get mAP
 from models import *
 from utils.utils import *
 from data.dataset_voc import VOCDetection
-from data.dataset_tt100k import TT100KDetection
+from data.dataset_dfsign import DFSignDetection
 
 from pprint import pprint
 import pdb
@@ -77,11 +77,11 @@ def train(
         model = torch.nn.DataParallel(model, device_ids=list(range(torch.cuda.device_count())))
 
     # Set scheduler
-    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[50, 90], gamma=0.1, last_epoch=start_epoch - 1)
+    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20, 40], gamma=0.1, last_epoch=start_epoch - 1)
 
     # Dataset
     # train_dataset = VOCDetection(root=os.path.join('~', 'data', 'VOCdevkit'), img_size=img_size, mode='train')
-    train_dataset = TT100KDetection(root=os.path.join('~', 'data', 'TT100K', 'TT100K_chip_voc'), 
+    train_dataset = DFSignDetection(root=os.path.join('~', 'data', 'dfsign', 'dfsign_chip_voc'), 
                                     img_size=img_size, mode='train')
 
     # Dataloader

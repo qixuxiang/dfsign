@@ -161,7 +161,7 @@ class LoadImagesAndLabels(Dataset):  # for training
             # Augment image and labels
             img, labels = random_affine(img, labels, degrees=(-5, 5), translate=(0.10, 0.10), scale=(0.90, 1.10))
             # random left-right flip
-            img, labels = random_flip(img, labels, 0.5)
+            # img, labels = random_flip(img, labels, 0.5)
             # color distort
             # img = random_color_distort(img)
         else:

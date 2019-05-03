@@ -8,7 +8,7 @@ from sys import platform
 from models import *
 from data.datasets import *
 from utils.utils import *
-from data.dataset_tt100k import TT100KDetection
+from data.dataset_dfsign import DFSignDetection
 
 import pdb
 
@@ -49,7 +49,7 @@ def detect(
 
     model.to(device).eval()
 
-    tt100k = True
+    tt100k = False
     # Set Dataloader
     if tt100k:
         root_dir = '~/data/TT100K/TT100K_chip_voc'
@@ -63,10 +63,10 @@ def detect(
     dataloader = LoadImages(images, img_size=img_size)
 
     # Get classes and colors
-    classes = TT100KDetection.CLASSES
+    classes = DFSignDetection.CLASSES
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(classes))]
 
-    save_images = False
+    save_images = True
     results = dict()
     for i, (path, img, im0, vid_cap) in enumerate(tqdm(dataloader)):
         t = time.time()
@@ -77,7 +77,7 @@ def detect(
         img = torch.from_numpy(img).unsqueeze(0).to(device)
         pred, _ = model(img)
         detections = nms(pred, conf_thres, nms_thres, method='nms')[0]
-        detections = detections[detections[:, 4] > 0.6]
+        detections = detections[detections[:, 4] > 0.1]
 
         if detections is not None and len(detections) > 0:
             # Rescale boxes from 416 to true image size
@@ -106,7 +106,7 @@ def detect(
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cfg', type=str, default='cfg/yolov3-tt100k.cfg', help='cfg file path')
+    parser.add_argument('--cfg', type=str, default='cfg/yolov3-dfsign.cfg', help='cfg file path')
     parser.add_argument('--weights', type=str, default='weights/yolov3.weights', help='path to weights file')
     parser.add_argument('--images', type=str, default='data/samples', help='path to images')
     parser.add_argument('--img-size', type=int, default=416, help='size of each image dimension')

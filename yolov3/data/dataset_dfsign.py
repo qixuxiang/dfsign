@@ -12,16 +12,13 @@ except ImportError:
 
 from .datasets import LoadImagesAndLabels
 
-class TT100KDetection(LoadImagesAndLabels):
+class DFSignDetection(LoadImagesAndLabels):
 
     CLASSES = (
-        'p11', 'pl5', 'pne', 'il60', 'pl80', 'pl100', 'il80', 'po', 'w55',
-        'pl40', 'pn', 'pm55', 'w32', 'pl20', 'p27', 'p26', 'p12', 'i5',
-        'pl120', 'pl60', 'pl30', 'pl70', 'pl50', 'ip', 'pg', 'p10', 'io',
-        'pr40', 'p5', 'p3', 'i2', 'i4', 'ph4', 'wo', 'pm30', 'ph5', 'p23',
-        'pm20', 'w57', 'w13', 'p19', 'w59', 'il100', 'p6', 'ph4.5')
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
+        '11', '12', '13', '14', '15', '16', '17', '18', '19', '20')
 
-    def __init__(self, root=os.path.join('~', 'data', 'TT100K', 'TT100K_chip_voc'),
+    def __init__(self, root=os.path.join('~', 'data', 'dfsign', 'dfsign_chip_voc'),
                 splits=('train',), img_size=608, mode='train'):
         self._root = os.path.expanduser(root)
         self._splits = splits
@@ -32,7 +29,7 @@ class TT100KDetection(LoadImagesAndLabels):
         self._label_files = [self._anno_path.format(*x) for x in self._items]
         self.index_map = dict(zip(self.classes, range(self.num_class)))
 
-        super(TT100KDetection, self).__init__(self._img_files, self._label_files, img_size, mode)
+        super(DFSignDetection, self).__init__(self._img_files, self._label_files, img_size, mode)
 
 
     @property
