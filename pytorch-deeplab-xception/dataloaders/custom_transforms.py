@@ -46,6 +46,43 @@ class ToTensor(object):
         return {'image': img,
                 'label': mask}
 
+class TestNormalize(object):
+    """Normalize a tensor image with mean and standard deviation.
+    Args:
+        mean (tuple): means for each channel.
+        std (tuple): standard deviations for each channel.
+    """
+    def __init__(self, mean=(0., 0., 0.), std=(1., 1., 1.)):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, sample):
+        img = sample['image']
+        mask = sample['label']
+        img = np.array(img).astype(np.float32)
+        img /= 255.0
+        img -= self.mean
+        img /= self.std
+
+        return {'image': img,
+                'label': mask}
+
+
+class TestToTensor(object):
+    """Convert ndarrays in sample to Tensors."""
+
+    def __call__(self, sample):
+        # swap color axis because
+        # numpy image: H x W x C
+        # torch image: C X H X W
+        img = sample['image']
+        mask = sample['label']
+        img = np.array(img).astype(np.float32).transpose((2, 0, 1))
+        img = torch.from_numpy(img).float()
+
+        return {'image': img,
+                'label': mask}
+
 
 class RandomColorJeter(object):
     def __init__(self, brightness=0, contrast=0, saturation=0, hue=0):

@@ -49,10 +49,10 @@ def detect(
 
     model.to(device).eval()
 
-    tt100k = False
+    dfsign = True
     # Set Dataloader
-    if tt100k:
-        root_dir = '~/data/TT100K/TT100K_chip_voc'
+    if dfsign:
+        root_dir = '~/data/dfsign/dfsign_chip_voc'
         root_dir = os.path.expanduser(root_dir)
         list_file = os.path.join(root_dir, 'ImageSets/Main/test.txt')
         image_dir = os.path.join(root_dir, 'JPEGImages')
@@ -66,7 +66,7 @@ def detect(
     classes = DFSignDetection.CLASSES
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(classes))]
 
-    save_images = True
+    save_images = False
     results = dict()
     for i, (path, img, im0, vid_cap) in enumerate(tqdm(dataloader)):
         t = time.time()
@@ -77,7 +77,7 @@ def detect(
         img = torch.from_numpy(img).unsqueeze(0).to(device)
         pred, _ = model(img)
         detections = nms(pred, conf_thres, nms_thres, method='nms')[0]
-        detections = detections[detections[:, 4] > 0.1]
+        detections = detections[detections[:, 4] > 0.6]
 
         if detections is not None and len(detections) > 0:
             # Rescale boxes from 416 to true image size

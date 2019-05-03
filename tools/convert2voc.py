@@ -87,6 +87,7 @@ if __name__ == "__main__":
         os.mkdir(list_folder)
 
     train_list = glob.glob(src_traindir + '/*.jpg')
+    test_list = glob.glob(src_testdir + '/*.jpg')
     random.shuffle(train_list)
     train_list, val_list = train_list[:-2000], train_list[-2000:]
     all_list = train_list + val_list
@@ -98,11 +99,14 @@ if __name__ == "__main__":
     with open(os.path.join(list_folder, 'val.txt'), 'w') as f:
         temp = [os.path.basename(x)[:-4]+'\n' for x in val_list]
         f.writelines(temp)
+    with open(os.path.join(list_folder, 'test.txt'), 'w') as f:
+        temp = [os.path.basename(x)[:-4]+'\n' for x in test_list]
+        f.writelines(temp)
 
-    # print('copy image....')
-    # with concurrent.futures.ThreadPoolExecutor() as exector:
-    #     exector.map(_copy, all_list, [image_dir]*len(all_list))
-    # print('done.')
+    print('copy image....')
+    with concurrent.futures.ThreadPoolExecutor() as exector:
+        exector.map(_copy, test_list, [image_dir]*len(test_list))
+    print('done.')
 
     # read label
     df = pd.read_csv(src_annotation)

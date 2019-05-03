@@ -18,7 +18,7 @@ class Tester(object):
         self.args = args
         
         # Define Dataloader
-        test_set = dfsign.DFSignSegmentation(args, split='val')
+        test_set = dfsign.DFSignSegmentation(args, split='test')
         self.nclass = test_set.NUM_CLASSES
         self.test_loader = DataLoader(test_set,
                                 batch_size=args.test_batch_size,

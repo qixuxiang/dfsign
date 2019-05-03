@@ -4,39 +4,28 @@
 
 import os, sys
 import cv2
+import glob
 import json
+import random
 import numpy as np
 from tqdm import tqdm
-from glob import glob
 from operator import add
 import utils
 import pdb
 
+random.seed(100)
 home = os.path.expanduser('~')
-root_datadir = os.path.join(home, 'data/TT100K')
-src_traindir = root_datadir + '/data/train'
-src_testdir = root_datadir + '/data/test'
-src_annotation = root_datadir + '/data/annotations.json'
+root_datadir = os.path.join(home, 'data/dfsign')
+src_traindir = root_datadir + '/train'
+src_testdir = root_datadir + '/test'
+src_annotation = root_datadir + '/train_label_fix.csv'
 
-# TT100K imageset list files
-train_ids = src_traindir + '/ids.txt'
-test_ids = src_testdir + '/ids.txt'
-
-dest_datadir = root_datadir + '/TT100K_chip_voc'
+dest_datadir = root_datadir + '/dfsign_chip_voc'
 image_dir = dest_datadir + '/JPEGImages'
 list_dir = dest_datadir + '/ImageSets/Main'
 anno_dir = dest_datadir + '/Annotations'
 
-mask_path = os.path.join(home,
-            'codes/gluon-cv/projects/seg/outdir')
-            # 'codes/deeplab-tensorflow/deeplab/datasets/tt100k/exp/vis/raw_segmentation_results')
-
-if not os.path.exists(dest_datadir):
-    os.mkdir(dest_datadir)
-    os.mkdir(image_dir)
-    os.makedirs(list_dir)
-    os.mkdir(anno_dir)
-
+mask_path = os.path.join(home, 'working/dfsign/pytorch-deeplab-xception/run/mask')
 
 def mask_chip(mask_box, image_size):
     """
@@ -57,11 +46,11 @@ def mask_chip(mask_box, image_size):
         box_cy = box[1] + box_h / 2
 
         if box_w < 100 and box_h < 100:
-            chip_size = max(box_w, box_h)+100
+            chip_size = max(box_w, box_h)+150
         elif box_w < 150 and box_h < 150:
-            chip_size = max(box_w, box_h)+50
-        elif box_w < 200 and box_h < 200:
             chip_size = max(box_w, box_h)+100
+        elif box_w < 200 and box_h < 200:
+            chip_size = max(box_w, box_h)+150
         elif box_w < 300 and box_h < 300:
             chip_size = max(box_w, box_h)+50
         else:
@@ -78,24 +67,31 @@ def mask_chip(mask_box, image_size):
     return chip_list
 
 def main():
-    with open(test_ids, 'r') as f:
-        test_list = [x.strip() for x in f.readlines()]
+    if not os.path.exists(dest_datadir):
+        os.mkdir(dest_datadir)
+        os.mkdir(image_dir)
+        os.makedirs(list_dir)
+        os.mkdir(anno_dir)
+
+    train_list = glob.glob(src_traindir + '/*.jpg')
+    random.shuffle(train_list)
+    train_list, val_list = train_list[:-2000], train_list[-2000:]
+    test_list = glob.glob(src_testdir + '/*.jpg')
+    test_list = [os.path.basename(x)[:-4] for x in test_list]
 
     chip_loc = {}
     chip_name_list = []
     for imgid in tqdm(test_list):
         origin_img = cv2.imread(os.path.join(src_testdir, '%s.jpg'%imgid))
         mask_img = cv2.imread(os.path.join(mask_path, '%s.png'%imgid), cv2.IMREAD_GRAYSCALE)
-
-        # mask_img = cv2.resize(mask_img, (2048, 2048), cv2.INTER_MAX)
+        
         height, width = mask_img.shape[:2]
-        # pdb.set_trace()
         mask_box = utils.generate_box_from_mask(mask_img)
         mask_box = list(map(utils.resize_box, mask_box,
-                        [width]*len(mask_box), [2048]*len(mask_box)))
-        # mask_box = utils.enlarge_box(mask_box, (2048, 2048), ratio=1)
+                            [(width, height)]*len(mask_box), 
+                            [(3200, 1800)]*len(mask_box)))
 
-        chip_list = mask_chip(mask_box, (2048, 2048))
+        chip_list = mask_chip(mask_box, (3200, 1800))
         # utils._boxvis(cv2.resize(mask_img, (2048, 2048)), chip_list, origin_img)
         # cv2.waitKey(0)
 
