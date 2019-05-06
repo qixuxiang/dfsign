@@ -77,7 +77,7 @@ def detect(
         img = torch.from_numpy(img).unsqueeze(0).to(device)
         pred, _ = model(img)
         detections = nms(pred, conf_thres, nms_thres, method='nms')[0]
-        detections = detections[detections[:, 4] > 0.6]
+        detections = detections[detections[:, 4] > 0.4]
 
         if detections is not None and len(detections) > 0:
             # Rescale boxes from 416 to true image size
@@ -99,9 +99,11 @@ def detect(
         if save_images:
             cv2.imwrite(save_path, im0)
             print('Done. (%.3fs)' % (time.time() - t))
-
-    with open(output + '/results.json', 'w') as f:
-        json.dump(results, f, cls=MyEncoder)
+    
+    if not save_images:
+        with open(output + '/results.json', 'w') as f:
+            json.dump(results, f, cls=MyEncoder)
+            print('results json saved.')
 
 
 if __name__ == '__main__':

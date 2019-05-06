@@ -183,7 +183,7 @@ class Trainer(object):
             'state_dict': self.model.module.state_dict(),
             'optimizer': self.optimizer.state_dict(),
             'best_pred': self.best_pred,
-        }, is_best)
+        }, is_best, 'checkpoint_%d.pth.tar' % (epoch+1))
 
 def main():
     parser = argparse.ArgumentParser(description="PyTorch DeeplabV3Plus Training")

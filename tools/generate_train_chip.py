@@ -234,7 +234,7 @@ def main():
     
     train_list = glob.glob(src_traindir + '/*.jpg')
     random.shuffle(train_list)
-    train_list, val_list = train_list[:-2000], train_list[-2000:]
+    # train_list, val_list = train_list[:-2000], train_list[-2000:]
     train_list = [os.path.basename(x)[:-4] for x in train_list]
 
     # read label
