@@ -46,15 +46,15 @@ def mask_chip(mask_box, image_size):
         box_cy = box[1] + box_h / 2
 
         if box_w < 100 and box_h < 100:
-            chip_size = max(box_w, box_h)+150
+            chip_size = max(box_w, box_h)+50
         elif box_w < 150 and box_h < 150:
-            chip_size = max(box_w, box_h)+150
+            chip_size = max(box_w, box_h)+50
         elif box_w < 200 and box_h < 200:
             chip_size = max(box_w, box_h)+150
         elif box_w < 300 and box_h < 300:
-            chip_size = max(box_w, box_h)+50
+            chip_size = max(box_w, box_h)+200
         else:
-            chip_size = max(box_w, box_h)+50
+            chip_size = max(box_w, box_h)+200
 
         chip = [box_cx - chip_size / 2, box_cy - chip_size / 2,
                 box_cx + chip_size / 2, box_cy + chip_size / 2]
@@ -97,7 +97,7 @@ def main():
 
         for i, chip in enumerate(chip_list):
             chip_img = origin_img[chip[1]:chip[3], chip[0]:chip[2], :].copy()
-            chip_img = cv2.resize(chip_img, (416, 416), cv2.INTER_AREA)
+            # chip_img = cv2.resize(chip_img, (416, 416), cv2.INTER_AREA)
             chip_name = '%s_%d' % (imgid, i)
             cv2.imwrite(os.path.join(image_dir, '%s.jpg'%chip_name), chip_img)
             chip_name_list.append(chip_name)

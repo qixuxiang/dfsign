@@ -26,7 +26,7 @@ anno_dir = dest_datadir + '/Annotations'
 # chip loc
 loc_json = os.path.join(anno_dir, 'test_chip.json')
 # detections
-detect_json = os.path.join(home, 'working/dfsign/yolov3/output/results.json')
+detect_json = os.path.join(home, 'working/dfsign/faster-rcnn.pytorch/output/results.json')
 
 def main():
     # read chip loc
@@ -38,21 +38,22 @@ def main():
 
     dfsign_results = []
     for chip_id, chip_result in chip_detect.items():
+        chip_id = os.path.basename(chip_id)
         img_id = chip_id.split('_')[0] + '.jpg'
 
         loc = chip_loc[chip_id]['loc']
         for i, pred_box in enumerate(chip_result['pred_box']):
             # transform to orginal image
-            ratio = (loc[2] - loc[0]) / 416.
-            pred_box = [pred_box[0] * ratio + loc[0],
-                        pred_box[1] * ratio + loc[1],
-                        pred_box[2] * ratio + loc[0],
-                        pred_box[3] * ratio + loc[1]]
+            # ratio = (loc[2] - loc[0]) / 416.
+            pred_box = [pred_box[0] + loc[0] + 1,
+                        pred_box[1] + loc[1] + 1,
+                        pred_box[2] + loc[0] + 1,
+                        pred_box[3] + loc[1] + 1]
             sign_type = int(chip_result['pred_label'][i])
             score = chip_result['pred_score'][i]
             pred_box = [pred_box[0], pred_box[1], pred_box[2], pred_box[1],
                         pred_box[2], pred_box[3], pred_box[0], pred_box[3]]
-            pred_box = [int(x) for x in pred_box]
+            # pred_box = [int(x) for x in pred_box]
             dfsign_results.append([img_id] + pred_box + [sign_type, score])
     
     filter_results = []

@@ -166,6 +166,7 @@ def write_chip_and_anno(image, imgid,
     chip_list, chip_gt_list, chip_label_list):
     """write chips of one image to disk and make xml annotations
     """
+    assert len(chip_gt_list) > 0
     for i, chip in enumerate(chip_list):
         img_name = '%s_%d.jpg' % (imgid, i)
         xml_name = '%s_%d.xml' % (imgid, i)
@@ -176,7 +177,9 @@ def write_chip_and_anno(image, imgid,
         chip_img = image[chip[1]:chip[3], chip[0]:chip[2], :].copy()
         chip_img = cv2.resize(chip_img, (416, 416), interpolation=cv2.INTER_LINEAR)
 
-        dom = make_xml(chip, chip_gt_list[i] / ratio, chip_label_list[i], img_name)
+        bbox = np.array(chip_gt_list[i] / ratio, dtype=np.int)
+        bbox = np.clip(bbox, 0, 416-1)
+        dom = make_xml(chip, bbox, chip_label_list[i], img_name)
 
         cv2.imwrite(os.path.join(image_dir, img_name), chip_img)
         with open(os.path.join(anno_dir, xml_name), 'w') as f:
