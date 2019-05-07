@@ -10,23 +10,17 @@ from __future__ import print_function
 import _init_paths
 import os
 import sys
+import json
 import shutil
 import numpy as np
 import argparse
 import pprint
-import pdb
 import time
 import cv2
 import torch
 from torch.autograd import Variable
-import torch.nn as nn
-import torch.optim as optim
 
-import torchvision.transforms as transforms
-import torchvision.datasets as dset
 from imageio import imread
-from roi_data_layer.roidb import combined_roidb
-from roi_data_layer.roibatchLoader import roibatchLoader
 from model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
 from model.rpn.bbox_transform import clip_boxes
 # from model.nms.nms_wrapper import nms
@@ -76,17 +70,21 @@ def parse_args():
     parser.add_argument('--cag', dest='class_agnostic',
                         help='whether perform class_agnostic bbox regression',
                         action='store_true')
-    parser.add_argument('--vis', dest='vis',
-                        help='visualization mode',
-                        action='store_true')
 
     args = parser.parse_args()
     return args
 
 
-lr = cfg.TRAIN.LEARNING_RATE
-momentum = cfg.TRAIN.MOMENTUM
-weight_decay = cfg.TRAIN.WEIGHT_DECAY
+class MyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(MyEncoder, self).default(obj)
 
 
 def _get_image_blob(im):
@@ -139,8 +137,8 @@ if __name__ == '__main__':
 
     cfg.USE_GPU_NMS = args.cuda
 
-    print('Using config:')
-    pprint.pprint(cfg)
+    # print('Using config:')
+    # pprint.pprint(cfg)
     np.random.seed(cfg.RNG_SEED)
 
     # train set
@@ -151,7 +149,7 @@ if __name__ == '__main__':
         raise Exception(
             'There is no input directory for loading network from ' + input_dir)
     load_name = os.path.join(input_dir,
-                             'faster_rcnn_1_1_10127.pth')
+                             'faster_rcnn_1_20_10127.pth')
 
     output_dir = 'output'
     if os.path.exists(output_dir):
@@ -219,10 +217,10 @@ if __name__ == '__main__':
     fasterRCNN.eval()
 
     start = time.time()
-    thresh = 0.05
-    vis = True
+    thresh = 0.5
+    vis = False
     save_vis = True
-    dfsign = False
+    dfsign = True
 
     # get image list
     if dfsign:
@@ -239,11 +237,12 @@ if __name__ == '__main__':
 
     print('Loaded Photo: {} images.'.format(num_images))
 
+    results = dict()
     while (num_images >= 0):
         total_tic = time.time()
         num_images -= 1
 
-        # Get image from the webcam
+        # Get image
         im_file = os.path.join(args.image_dir, imglist[num_images])
         # im = cv2.imread(im_file)
         im_in = np.array(imread(im_file))
@@ -316,6 +315,8 @@ if __name__ == '__main__':
         det_toc = time.time()
         detect_time = det_toc - det_tic
         misc_tic = time.time()
+
+        im_dets = []
         if vis:
             im2show = np.copy(im)
         for j in xrange(1, len(dfsign_classes)):
@@ -335,10 +336,22 @@ if __name__ == '__main__':
                 # keep = nms(cls_dets, cfg.TEST.NMS, force_cpu=not cfg.USE_GPU_NMS)
                 keep = nms(cls_boxes[order, :],
                            cls_scores[order], cfg.TEST.NMS)
-                cls_dets = cls_dets[keep.view(-1).long()]
+                cls_dets = cls_dets[keep.view(-1).long()].cpu()
+                
+                cls_dets = torch.cat((cls_dets, torch.FloatTensor([j]).repeat(cls_dets.size(0)).unsqueeze(1)), 1)
+                im_dets.append(cls_dets)
+
                 if vis:
                     im2show = vis_detections(
-                        im2show, dfsign_classes[j], cls_dets.cpu().numpy(), 0.5)
+                        im2show, dfsign_classes[j], cls_dets.numpy(), 0.5)
+        
+        # image results
+        if len(im_dets) > 0:
+            im_dets = torch.cat(im_dets, 0).numpy()
+            results[imglist[num_images][:-4]] = \
+                {'pred_box': im_dets[:,:4],
+                'pred_score': im_dets[:,4],
+                'pred_label': [dfsign_classes[int(i)] for i in im_dets[:,5]]}
 
         misc_toc = time.time()
         nms_time = misc_toc - misc_tic
@@ -347,18 +360,24 @@ if __name__ == '__main__':
                             .format(num_images + 1, len(imglist), detect_time, nms_time))
         sys.stdout.flush()
 
-        if vis and save_vis:
-            # cv2.imshow('test', im2show)
-            # cv2.waitKey(0)
-            result_path = os.path.join(
-                output_dir, imglist[num_images][:-4] + "_det.jpg")
-            cv2.imwrite(result_path, im2show)
-        else:
-            im2showRGB = cv2.cvtColor(im2show, cv2.COLOR_BGR2RGB)
-            cv2.imshow("frame", im2show)
-            total_toc = time.time()
-            total_time = total_toc - total_tic
-            frame_rate = 1 / total_time
-            print('Frame rate:', frame_rate)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+        if vis:
+            if save_vis:
+                # cv2.imshow('test', im2show)
+                # cv2.waitKey(0)
+                result_path = os.path.join(
+                    output_dir, imglist[num_images][:-4] + "_det.jpg")
+                cv2.imwrite(result_path, im2show)
+            else:
+                im2showRGB = cv2.cvtColor(im2show, cv2.COLOR_BGR2RGB)
+                cv2.imshow("frame", im2show)
+                total_toc = time.time()
+                total_time = total_toc - total_tic
+                frame_rate = 1 / total_time
+                print('Frame rate:', frame_rate)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+
+    if not vis:
+        with open(output_dir + '/results.json', 'w') as f:
+            json.dump(results, f, cls=MyEncoder)
+            print('results json saved.')
