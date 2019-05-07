@@ -71,6 +71,11 @@ def _generate_mask(img_path, label_df):
             ymin = np.floor(1.0 * box[1] / height * mask_h).astype(np.int32)
             xmax = np.floor(1.0 * box[2] / width * mask_w).astype(np.int32)
             ymax = np.floor(1.0 * box[3] / height * mask_h).astype(np.int32)
+            ignore_xmin = xmin - 1 if xmin - 1 >= 0 else 0
+            ignore_ymin = ymin - 1 if ymin - 1 >= 0 else 0
+            ignore_xmax = xmax + 1 if xmax + 1 < mask_w else mask_w - 1
+            ignore_ymax = ymax + 1 if ymax + 1 < mask_h else mask_h - 1
+            region_mask[ignore_ymin : ignore_ymax+1, ignore_xmin : ignore_xmax+1] = 255
             region_mask[ymin : ymax+1, xmin : xmax+1] = 1
         maskname = os.path.join(segmentation_dir, img_name[:-4] + '_region.png')
         cv2.imwrite(maskname, region_mask)
@@ -92,26 +97,38 @@ if __name__ == "__main__":
     train_list, val_list = train_list[:-1000], train_list[-1000:]
     all_list = train_list + val_list
 
-    # write list file
-    with open(os.path.join(list_folder, 'train.txt'), 'w') as f:
-        temp = [os.path.basename(x)[:-4]+'\n' for x in train_list]
-        f.writelines(temp)
-    with open(os.path.join(list_folder, 'val.txt'), 'w') as f:
-        temp = [os.path.basename(x)[:-4]+'\n' for x in val_list]
-        f.writelines(temp)
-    # with open(os.path.join(list_folder, 'test.txt'), 'w') as f:
-    #     temp = [os.path.basename(x)[:-4]+'\n' for x in test_list]
-    #     f.writelines(temp)
-
-    # print('copy image....')
-    # with concurrent.futures.ThreadPoolExecutor() as exector:
-    #     exector.map(_copy, train_list, [image_dir]*len(train_list))
-    # print('done.')
-
     # read label
     df = pd.read_csv(src_annotation)
+    
+    trainval = True
+    test = False
+    if trainval:
+        with open(os.path.join(list_folder, 'train.txt'), 'w') as f:
+            temp = [os.path.basename(x)[:-4]+'\n' for x in train_list]
+            f.writelines(temp)
+        with open(os.path.join(list_folder, 'val.txt'), 'w') as f:
+            temp = [os.path.basename(x)[:-4]+'\n' for x in val_list]
+            f.writelines(temp)
+        print('copy train image....')
+        with concurrent.futures.ThreadPoolExecutor() as exector:
+            exector.map(_copy, train_list, [image_dir]*len(train_list))
+        print('copy val image....')
+        with concurrent.futures.ThreadPoolExecutor() as exector:
+            exector.map(_copy, val_list, [image_dir]*len(val_list))
+        print('generate mask...')
+        with concurrent.futures.ThreadPoolExecutor() as exector:
+            exector.map(_generate_mask, all_list, [df]*len(all_list))
+        print('done.')
 
-    print('generate mask...')
-    with concurrent.futures.ThreadPoolExecutor() as exector:
-        exector.map(_generate_mask, all_list, [df]*len(all_list))
-    print('done.')
+    if test:
+        with open(os.path.join(list_folder, 'test.txt'), 'w') as f:
+            temp = [os.path.basename(x)[:-4]+'\n' for x in test_list]
+            f.writelines(temp)
+        print('copy test image....')
+        with concurrent.futures.ThreadPoolExecutor() as exector:
+            exector.map(_copy, test_list, [image_dir]*len(test_list))
+        print('done.')
+
+    
+
+    
