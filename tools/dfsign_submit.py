@@ -26,7 +26,7 @@ anno_dir = dest_datadir + '/Annotations'
 # chip loc
 loc_json = os.path.join(anno_dir, 'test_chip.json')
 # detections
-detect_json = os.path.join(home, 'working/dfsign/faster-rcnn.pytorch/output/results.json')
+detect_json = os.path.join(home, 'working/dfsign/mmdetection/dfsign/results.json')
 
 def main():
     # read chip loc
