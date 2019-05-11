@@ -14,11 +14,11 @@ then
     python train.py \
         --num-workers=4 \
         --gpus="0,1" \
-        --epochs=50 \
+        --epochs=20 \
         --resume="" \
         --start-epoch=0 \
         --lr=1e-3 \
-        --lr-decay-epoch="30" \
+        --lr-decay-epoch="15" \
         --momentum=0.9 \
         --wd=5e-4 
 elif [ 2 == $FLAG ]

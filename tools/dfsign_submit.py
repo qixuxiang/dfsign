@@ -45,10 +45,10 @@ def main():
         for i, pred_box in enumerate(chip_result['pred_box']):
             # transform to orginal image
             # ratio = (loc[2] - loc[0]) / 416.
-            pred_box = [pred_box[0] + loc[0] + 1,
-                        pred_box[1] + loc[1] + 1,
-                        pred_box[2] + loc[0] + 1,
-                        pred_box[3] + loc[1] + 1]
+            pred_box = [pred_box[0] + loc[0],
+                        pred_box[1] + loc[1],
+                        pred_box[2] + loc[0],
+                        pred_box[3] + loc[1]]
             sign_type = int(chip_result['pred_label'][i])
             score = chip_result['pred_score'][i]
             pred_box = [pred_box[0], pred_box[1], pred_box[2], pred_box[1],

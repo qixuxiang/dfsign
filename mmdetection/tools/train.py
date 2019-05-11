@@ -1,5 +1,9 @@
 from __future__ import division
 
+import os.path as osp
+import sys
+sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
+
 import argparse
 from mmcv import Config
 
@@ -9,11 +13,6 @@ from mmdet.apis import (train_detector, init_dist, get_root_logger,
                         set_random_seed)
 from mmdet.models import build_detector
 import torch
-
-import os.path as osp
-import sys
-sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
-
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')

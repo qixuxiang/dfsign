@@ -87,6 +87,21 @@ train_cfg = dict(
         dict(
             assigner=dict(
                 type='MaxIoUAssigner',
+                pos_iou_thr=0.5,
+                neg_iou_thr=0.5,
+                min_pos_iou=0.5,
+                ignore_iof_thr=-1),
+            sampler=dict(
+                type='RandomSampler',
+                num=512,
+                pos_fraction=0.25,
+                neg_pos_ub=-1,
+                add_gt_as_proposals=True),
+            pos_weight=-1,
+            debug=False),
+        dict(
+            assigner=dict(
+                type='MaxIoUAssigner',
                 pos_iou_thr=0.6,
                 neg_iou_thr=0.6,
                 min_pos_iou=0.6,
@@ -105,21 +120,6 @@ train_cfg = dict(
                 pos_iou_thr=0.7,
                 neg_iou_thr=0.7,
                 min_pos_iou=0.7,
-                ignore_iof_thr=-1),
-            sampler=dict(
-                type='RandomSampler',
-                num=512,
-                pos_fraction=0.25,
-                neg_pos_ub=-1,
-                add_gt_as_proposals=True),
-            pos_weight=-1,
-            debug=False),
-        dict(
-            assigner=dict(
-                type='MaxIoUAssigner',
-                pos_iou_thr=0.8,
-                neg_iou_thr=0.8,
-                min_pos_iou=0.8,
                 ignore_iof_thr=-1),
             sampler=dict(
                 type='RandomSampler',
@@ -181,7 +181,7 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
-    step=[10, 16])
+    step=[8, 14])
 checkpoint_config = dict(interval=1)
 # yapf:disable
 log_config = dict(
@@ -192,7 +192,7 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 20
+total_epochs = 15
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/cascade_rcnn_x101_64x4d_fpn_1x'

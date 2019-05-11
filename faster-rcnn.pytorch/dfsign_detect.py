@@ -217,9 +217,9 @@ if __name__ == '__main__':
     fasterRCNN.eval()
 
     start = time.time()
-    thresh = 0.5
+    thresh = 0.05
     vis = False
-    save_vis = True
+    save_vis = False
     dfsign = True
 
     # get image list
@@ -337,13 +337,13 @@ if __name__ == '__main__':
                 keep = nms(cls_boxes[order, :],
                            cls_scores[order], cfg.TEST.NMS)
                 cls_dets = cls_dets[keep.view(-1).long()].cpu()
-                
-                cls_dets = torch.cat((cls_dets, torch.FloatTensor([j]).repeat(cls_dets.size(0)).unsqueeze(1)), 1)
-                im_dets.append(cls_dets)
 
                 if vis:
                     im2show = vis_detections(
                         im2show, dfsign_classes[j], cls_dets.numpy(), 0.5)
+                
+                cls_dets = torch.cat((cls_dets, torch.FloatTensor([j]).repeat(cls_dets.size(0)).unsqueeze(1)), 1)
+                im_dets.append(cls_dets)   
         
         # image results
         if len(im_dets) > 0:

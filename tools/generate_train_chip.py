@@ -195,9 +195,12 @@ def get_box_label(label_df, im_name):
         ymin = min(row['Y1'], row['Y2'], row['Y3'], row['Y4'])
         xmax = max(row['X1'], row['X2'], row['X3'], row['X4'])
         ymax = max(row['Y1'], row['Y2'], row['Y3'], row['Y4'])
+
+        xmax = min(xmax, 3200-1)
+        ymax = min(ymax, 1800-1)
         boxes.append([xmin, ymin, xmax, ymax])
         labels.append(row['type'])
-    return np.array(boxes) - 1, labels
+    return np.array(boxes), labels
 
 
 def generate_imgset(train_list):

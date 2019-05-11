@@ -67,7 +67,7 @@ class Evaluator(object):
             count = 0
             for box1 in label_box:
                 for box2 in mask_box:
-                    if utils.overlap(box2, box1):
+                    if utils.overlap(box2, box1, thresh=0.9):
                         count += 1
                         break
             self.label_object.append(len(label_box))

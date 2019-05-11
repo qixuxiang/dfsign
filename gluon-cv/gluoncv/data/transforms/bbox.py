@@ -126,6 +126,8 @@ def resize(bbox, in_size, out_size):
     if not len(out_size) == 2:
         raise ValueError("out_size requires length 2 tuple, given {}".format(len(out_size)))
 
+    if len(bbox) < 1:
+        print('no label')
     bbox = bbox.copy()
     x_scale = out_size[0] / in_size[0]
     y_scale = out_size[1] / in_size[1]
