@@ -48,13 +48,13 @@ def mask_chip(mask_box, image_size):
         if box_w < 100 and box_h < 100:
             chip_size = max(box_w, box_h)+50
         elif box_w < 150 and box_h < 150:
-            chip_size = max(box_w, box_h)+50
+            chip_size = max(box_w, box_h)+30
         elif box_w < 200 and box_h < 200:
-            chip_size = max(box_w, box_h)+50
+            chip_size = max(box_w, box_h)+30
         elif box_w < 300 and box_h < 300:
             chip_size = max(box_w, box_h)+150
         else:
-            chip_size = max(box_w, box_h)+150
+            chip_size = max(box_w, box_h)+200
 
         chip = [box_cx - chip_size / 2, box_cy - chip_size / 2,
                 box_cx + chip_size / 2, box_cy + chip_size / 2]

@@ -55,12 +55,14 @@ def chip_v2(image, gt_boxes, labels):
         box_w = box[2] - box[0]
         box_h = box[3] - box[1]
         # different chip size for different gt size
-        if box_w < 100 and box_h < 100:
+        if box_w < 50 and box_h < 50:
             chip_size_list = [150, 300]
+        elif box_w < 100 and box_h < 100:
+            chip_size_list = [250, 500]
         elif box_w < 200 and box_h < 200:
-            chip_size_list = [300, 600]
+            chip_size_list = [400, 700]
         else:
-            chip_size_list = [600, 800]
+            chip_size_list = [600, 1000]
         
         for chip_size in chip_size_list:
             # region to random crop around gt

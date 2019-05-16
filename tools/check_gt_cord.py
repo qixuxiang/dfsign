@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt 
+import xml.etree.ElementTree as ET
 
 import pdb
 
@@ -19,6 +20,26 @@ src_traindir = root_datadir + '/train'
 src_testdir = root_datadir + '/test'
 src_annotation = root_datadir + '/train_label_fix.csv'
 
+dest_datadir = root_datadir + '/dfsign_chip_voc'
+image_dir = dest_datadir + '/JPEGImages'
+list_dir = dest_datadir + '/ImageSets/Main'
+anno_dir = dest_datadir + '/Annotations'
+
+def parse_xml(file):
+    xml = ET.parse(file).getroot()
+    box_all = []
+    pts = ['xmin', 'ymin', 'xmax', 'ymax']
+
+    # bounding boxes
+    for obj in xml.iter('object'):
+        bbox = obj.find('bndbox')
+        
+        bndbox = []
+        for i, pt in enumerate(pts):
+            cur_pt = int(bbox.find(pt).text) - 1
+            bndbox.append(cur_pt)
+        box_all += [bndbox]
+    return box_all
 
 def get_box_label(label_df, im_name):
     boxes = []
@@ -45,11 +66,19 @@ def _boxvis(img, gt_box_list):
     
 
 def main():
-    df = pd.read_csv(src_annotation)
+    # df = pd.read_csv(src_annotation)
 
-    for name in df.filename:
-        img = cv2.imread(os.path.join(src_traindir, name))
-        box, _ = get_box_label(df, name)
+    # for name in df.filename:
+    #     img = cv2.imread(os.path.join(src_traindir, name))
+    #     box, _ = get_box_label(df, name)
+    #     _boxvis(img, box)
+
+    with open(os.path.join(list_dir, 'train.txt'), 'r') as f:
+        img_list = [x.strip() for x in f.readlines()]
+
+    for name in img_list:
+        img = cv2.imread(os.path.join(image_dir, name+'.jpg'))
+        box = parse_xml(os.path.join(anno_dir, name+'.xml'))
         _boxvis(img, box)
 
 if __name__ == '__main__':
