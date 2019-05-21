@@ -18,7 +18,7 @@ src_traindir = root_datadir + '/train'
 src_testdir = root_datadir + '/test'
 src_annotation = root_datadir + '/train_label_fix.csv'
 
-dest_datadir = root_datadir + '/dfsign_chip_voc'
+dest_datadir = root_datadir + '/dfsign_detect_voc'
 image_dir = dest_datadir + '/JPEGImages'
 list_dir = dest_datadir + '/ImageSets/Main'
 anno_dir = dest_datadir + '/Annotations'
@@ -26,7 +26,9 @@ anno_dir = dest_datadir + '/Annotations'
 # chip loc
 loc_json = os.path.join(anno_dir, 'test_chip.json')
 # detections
-detect_json = os.path.join(home, 'working/dfsign/mmdetection/dfsign/results.json')
+detect_json = os.path.join(home,
+                        'working/dfsign/mmdetection/dfsign/results_detect.json')
+                        # 'working/dfsign/faster-rcnn.pytorch/output/results.json')
 
 def main():
     # read chip loc

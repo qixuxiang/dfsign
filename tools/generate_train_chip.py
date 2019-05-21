@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-generate 416x416 chips in voc format
+generate 600x600 chips in voc format
 image size: 3200x1800
 sign size: (0, 500)
 """
@@ -56,13 +56,13 @@ def chip_v2(image, gt_boxes, labels):
         box_h = box[3] - box[1]
         # different chip size for different gt size
         if box_w < 50 and box_h < 50:
-            chip_size_list = [150, 300]
+            chip_size_list = [80, 100, 150, 300]
         elif box_w < 100 and box_h < 100:
-            chip_size_list = [250, 500]
+            chip_size_list = [150, 200, 350, 500]
         elif box_w < 200 and box_h < 200:
-            chip_size_list = [400, 700]
+            chip_size_list = [300, 400, 700]
         else:
-            chip_size_list = [600, 1000]
+            chip_size_list = [400, 800, 1000]
         
         for chip_size in chip_size_list:
             # region to random crop around gt
@@ -94,7 +94,7 @@ def chip_v2(image, gt_boxes, labels):
         chip_label = []
 
         for i, box in enumerate(gt_boxes):
-            if utils.overlap(chip, box, 0.6):
+            if utils.overlap(chip, box, 0.8):
                 box = [max(box[0], chip[0]), max(box[1], chip[1]), 
                        min(box[2], chip[2]), min(box[3], chip[3])]
                 new_box = [box[0] - chip[0], box[1] - chip[1],
@@ -109,7 +109,7 @@ def chip_v2(image, gt_boxes, labels):
     return chip_list, chip_gt_list, chip_label_list
 
 
-def make_xml(chip, box_list, label_list, image_name):
+def make_xml(chip, box_list, label_list, image_name, tsize):
 
     node_root = Element('annotation')
 
@@ -134,9 +134,9 @@ def make_xml(chip, box_list, label_list, image_name):
 
     node_size = SubElement(node_root, 'size')
     node_width = SubElement(node_size, 'width')
-    node_width.text = '416'
+    node_width.text = str(tsize[0])
     node_height = SubElement(node_size, 'height')
-    node_height.text = '416'
+    node_height.text = str(tsize[1])
     node_depth = SubElement(node_size, 'depth')
     node_depth.text = '3'
 
@@ -173,15 +173,29 @@ def write_chip_and_anno(image, imgid,
         img_name = '%s_%d.jpg' % (imgid, i)
         xml_name = '%s_%d.xml' % (imgid, i)
 
-        # resize ratio -> 416x416
-        ratio = (chip[2] - chip[0]) / 416
+        # target size
+        p = random.random()
+        if p < 0.8 or chip[2] - chip[0] < 200:
+            tsize = (600, 600)
+        elif p < 0.9:
+            tsize = (600, 800)
+        else:
+            tsize = (800, 600)
+        # resize ratio -> 600x600
+        ratio_w = (chip[2] - chip[0]) / tsize[0]
+        ratio_h = (chip[3] - chip[1]) / tsize[1]
         
         chip_img = image[chip[1]:chip[3], chip[0]:chip[2], :].copy()
-        chip_img = cv2.resize(chip_img, (416, 416), interpolation=cv2.INTER_LINEAR)
+        chip_img = cv2.resize(chip_img, tsize, interpolation=cv2.INTER_LINEAR)
 
-        bbox = np.array(chip_gt_list[i] / ratio, dtype=np.int)
-        bbox = np.clip(bbox, 0, 416-1)
-        dom = make_xml(chip, bbox, chip_label_list[i], img_name)
+        bbox = []
+        for gt in chip_gt_list[i]:
+            bbox.append([gt[0] / ratio_w,
+                        gt[1] / ratio_h,
+                        gt[2] / ratio_w,
+                        gt[3] / ratio_h])
+        bbox = np.array(bbox, dtype=np.int)
+        dom = make_xml(chip, bbox, chip_label_list[i], img_name, tsize)
 
         cv2.imwrite(os.path.join(image_dir, img_name), chip_img)
         with open(os.path.join(anno_dir, xml_name), 'w') as f:
