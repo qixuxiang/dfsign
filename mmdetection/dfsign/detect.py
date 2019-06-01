@@ -2,11 +2,13 @@ import argparse
 
 import os.path as osp
 import os
+import cv2
 import sys
 import glob
 import json
 import time
 import numpy as np
+from matplotlib import pyplot as plt
 sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 
 import torch
@@ -17,7 +19,7 @@ from mmcv.parallel import scatter, collate, MMDataParallel
 from mmdet import datasets
 from mmdet.datasets import DFSignDataset
 from mmdet.models import build_detector, detectors
-from mmdet.apis import inference_detector
+from mmdet.apis import inference_detector, show_result
 
 import pdb
 
@@ -43,24 +45,25 @@ class MyEncoder(json.JSONEncoder):
 def show_result(img, result, classes, score_thr=0.3, out_file=None):
     img = mmcv.imread(img)
     class_names = classes
-    if isinstance(result, tuple):
-        bbox_result, segm_result = result
-    else:
-        bbox_result, segm_result = result, None
-    bboxes = np.vstack(bbox_result)
+    bboxes = np.vstack(result)
     # draw bounding boxes
     labels = [
         np.full(bbox.shape[0], i, dtype=np.int32)
-        for i, bbox in enumerate(bbox_result)
+        for i, bbox in enumerate(result)
     ]
     labels = np.concatenate(labels)
-    mmcv.imshow_det_bboxes(
-        img.copy(),
-        bboxes,
-        labels,
-        class_names=class_names,
-        score_thr=score_thr,
-        show=out_file is None)
+    img1 = img.copy()
+    for box, label in zip(bboxes, labels):
+        cv2.rectangle(img1, (box[0], box[1]), (box[2], box[3]), (255, 0, 0), 1)
+        box_int = [int(x) for x in box[:4]]
+        label_text = class_names[
+            label] if class_names is not None else 'cls {}'.format(label)
+        label_text += '|{:.02f}'.format(box[-1])
+        cv2.putText(img1, label_text, (box_int[0], box_int[1] - 2),
+                    cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 0, 0))
+    plt.subplot(1, 1, 1); plt.imshow(img1[:, :, [2,1,0]])
+    plt.show()
+    cv2.waitKey(0)
 
 
 def main():
@@ -79,9 +82,13 @@ def main():
     model = MMDataParallel(model, device_ids=[0])
 
     dfsign = True
+    chip = False
     # get image list
     if dfsign:
-        root_dir = '../data/dfsign/dfsign_chip_voc'
+        if chip:
+            root_dir = '../data/dfsign/dfsign_chip_voc'
+        else:
+            root_dir = '../data/dfsign/dfsign_detect_voc'
         root_dir = os.path.expanduser(root_dir)
         list_file = os.path.join(root_dir, 'ImageSets/Main/test.txt')
         image_dir = os.path.join(root_dir, 'JPEGImages')
@@ -96,8 +103,8 @@ def main():
     t0 = time.time()
     for i, preds in enumerate(inference_detector(model, imglist, cfg, device='cuda:0')):
         detect_time = time.time() - t0
-        sys.stdout.write('im_detect: {:d}/{:d} {:.3f}s   \r'
-                            .format(i + 1, len(imglist), detect_time))
+        sys.stdout.write('im_detect: {:d}/{:d} {:s} {:.3f}s   \r'
+                            .format(i + 1, len(imglist), imglist[i].split('/')[-1], detect_time))
         sys.stdout.flush()
 
         if args.show:
@@ -118,7 +125,11 @@ def main():
         t0 = time.time()
 
     if not args.show:
-        with open('results.json', 'w') as f:
+        if chip:
+            result_file = 'results_chip.json'
+        else:
+            result_file = 'results_detect.json'
+        with open(result_file, 'w') as f:
             json.dump(results, f, cls=MyEncoder)
             print('results json saved.')
 

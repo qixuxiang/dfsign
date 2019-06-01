@@ -1,5 +1,6 @@
 dfsign/work_dirs
 dfsign/samples
+dfsign/*.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
