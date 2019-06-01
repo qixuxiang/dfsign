@@ -129,7 +129,7 @@ if __name__ == '__main__':
     print('Called with args:')
     print(args)
 
-    args.set_cfgs = ['ANCHOR_SCALES', '[4, 8, 16, 32]', 'ANCHOR_RATIOS', '[1]', 'MAX_NUM_GT_BOXES', '20']
+    args.set_cfgs = ['ANCHOR_SCALES', '[4, 8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '20']
     if args.cfg_file is not None:
         cfg_from_file(args.cfg_file)
     if args.set_cfgs is not None:
@@ -149,7 +149,7 @@ if __name__ == '__main__':
         raise Exception(
             'There is no input directory for loading network from ' + input_dir)
     load_name = os.path.join(input_dir,
-                             'faster_rcnn_1_20_10127.pth')
+                             'faster_rcnn_1_28_10127.pth')
 
     output_dir = 'output'
     if os.path.exists(output_dir):
