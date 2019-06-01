@@ -2,4 +2,5 @@
 *.pkl
 __pycache__/
 
-tools/predict.csv
+tools/predict*.csv
+tools/temp

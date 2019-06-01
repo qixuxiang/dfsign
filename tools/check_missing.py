@@ -24,7 +24,7 @@ for name, chip in chip_loc.items():
     chip = chip['loc']
     width = chip[2] - chip[0]
     height = chip[3] - chip[1]
-    if max(width, height) > 500:
+    if max(width, height) < 99:
         img_big.append(name)
 print(len(img_big))
 

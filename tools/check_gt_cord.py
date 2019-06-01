@@ -79,7 +79,7 @@ def _originvis(name, bbox):
 
     
 if __name__ == '__main__':
-    vis = False
+    vis = True
 
     df = pd.read_csv(src_annotation)
 
@@ -96,12 +96,12 @@ if __name__ == '__main__':
         orgin_box, _ = get_box_label(df, orgin_name)
 
         label_w = orgin_box[0][2] - orgin_box[0][0]
-        if label_w > 140 and label_w < 145:
+        if label_w > 0 and label_w < 145:
             if vis:
                 img = cv2.imread(os.path.join(image_dir, name+'.jpg'))
                 box, width = parse_xml(os.path.join(anno_dir, name+'.xml'))
                 _boxvis(img, box)
-                _originvis(orgin_name, orgin_box)
+                # _originvis(orgin_name, orgin_box)
             else:
                 filter_list.append(orgin_name)
     

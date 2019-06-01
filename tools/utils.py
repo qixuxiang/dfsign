@@ -1,5 +1,7 @@
-import cv2 as cv
+import cv2
+import math
 import numpy as np
+import random
 import matplotlib.pyplot as plt
 
 TT100K_CLASSES = (
@@ -27,9 +29,9 @@ def generate_box_from_mask(mask):
         mask: 0/1 array
     """
     box_all = []
-    contours, _ = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     for i in range(len(contours)):
-        x, y, w, h = cv.boundingRect(contours[i])
+        x, y, w, h = cv2.boundingRect(contours[i])
 #if w < 2 and h < 2:
 #           continue
         box_all.append([x, y, x+w, y+h])
@@ -97,16 +99,16 @@ def overlap(box1, box2, thresh = 0.75):
 
 def _boxvis(img, box_list, origin_img=None, binary=True):
     # if binary:
-    #     ret, img = cv.threshold(img, 0, 255, cv.THRESH_BINARY)
+    #     ret, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY)
     for box in box_list:
-        cv.rectangle(img, (box[0], box[1]), (box[2], box[3]), 255, 4)
+        cv2.rectangle(img, (box[0], box[1]), (box[2], box[3]), 255, 4)
     plt.subplot(1, 2, 1); plt.imshow(img, cmap='gray')
     if not origin_img is None:
         for box in box_list:
-            cv.rectangle(origin_img, (box[0], box[1]), (box[2], box[3]), 255, 4)
+            cv2.rectangle(origin_img, (box[0], box[1]), (box[2], box[3]), 255, 4)
         plt.subplot(1, 2, 2); plt.imshow(origin_img[:, :, [2,1,0]])
     plt.show()
-    # cv.namedWindow('a', cv.WINDOW_AUTOSIZE)
-    # cv.imshow('a', binary)
-    # key = cv.waitKey(0)
+    # cv2.namedWindow('a', cv2.WINDOW_AUTOSIZE)
+    # cv2.imshow('a', binary)
+    # key = cv2.waitKey(0)
     # sys.exit(0)

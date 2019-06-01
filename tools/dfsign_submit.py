@@ -58,24 +58,30 @@ def main():
             # pred_box = [int(x) for x in pred_box]
             dfsign_results.append([img_id] + pred_box + [sign_type, score])
     
+    chip = False
     filter_results = []
     temp = np.array(dfsign_results)
     detected_img = np.unique(temp[:, 0])
     for img_id in detected_img:
         preds = temp[temp[:, 0] == img_id]
-        preds = preds[preds[:, -1].argsort()]
-        filter_results.append(list(preds[-1])[:-1])
 
-    test_list = glob.glob(src_testdir + '/*.jpg')
-    test_list = [os.path.basename(x) for x in test_list]
-    addition = []
-    temp = np.array(filter_results)
-    for img_id in test_list:
-        if img_id not in temp[:, 0]:
-            addition.append([img_id] + [0]*9)
+        # mean or max
+        pred_cls = preds[:, -2]
+        pred_cls = np.unique(pred_cls)
+        if chip:
+            preds = preds[preds[:, -1].argsort()]
+            filter_results.append(list(preds[-1])[:-1])
+        else:
+            box = np.mean(preds[:, 1:-2].astype(np.float64), axis=0)
+            preds = preds[preds[:, -1].argsort()]
+            cls_score = preds[-1][-2:]
+            if len(pred_cls) > 1:
+                print(img_id, preds[:, -1])  
+
+            filter_results.append(np.hstack((np.array(img_id), box, cls_score)))
+
     
-    filter_results += addition
-    columns = ['filename','X1','Y1','X2','Y2','X3','Y3','X4','Y4','type']
+    columns = ['filename','X1','Y1','X2','Y2','X3','Y3','X4','Y4','type', 'score']
     df = pd.DataFrame(filter_results, columns=columns)
     df.to_csv('predict.csv', index=False)
 
