@@ -46,7 +46,7 @@ def mask_chip(mask_box, image_size):
         box_cy = box[1] + box_h / 2
 
         if box_w < 100 and box_h < 100:
-            chip_size = max(box_w, box_h)+50
+            chip_size = max(box_w, box_h)+60
         elif box_w < 150 and box_h < 150:
             chip_size = max(box_w, box_h)+30
         elif box_w < 200 and box_h < 200:

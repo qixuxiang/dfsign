@@ -22,7 +22,6 @@ import utils
 import pdb
 import traceback
 
-random.seed(100)
 home = os.path.expanduser('~')
 
 root_datadir = os.path.join(home, 'data/dfsign')
@@ -45,7 +44,7 @@ def chip_v2(image, gt_boxes, labels):
         gt_boxes: list of [xmin, ymin, xmax, ymax]
         labels: list of 
     Returns:
-        chip list, size 300x300 
+        chip list
         new gt_box list
     """
     size = image.shape
@@ -56,11 +55,11 @@ def chip_v2(image, gt_boxes, labels):
         box_h = box[3] - box[1]
         # different chip size for different gt size
         if box_w < 50 and box_h < 50:
-            chip_size_list = [80, 100, 150, 300]
+            chip_size_list = [90, 110, 125, 150, 300]
         elif box_w < 100 and box_h < 100:
-            chip_size_list = [150, 200, 350, 500]
+            chip_size_list = [180, 250, 350, 500]
         elif box_w < 200 and box_h < 200:
-            chip_size_list = [300, 400, 700]
+            chip_size_list = [300, 400, 500, 700]
         else:
             chip_size_list = [400, 800, 1000]
         
@@ -174,14 +173,8 @@ def write_chip_and_anno(image, imgid,
         xml_name = '%s_%d.xml' % (imgid, i)
 
         # target size
-        p = random.random()
-        if p < 0.8 or chip[2] - chip[0] < 200:
-            tsize = (600, 600)
-        elif p < 0.9:
-            tsize = (600, 800)
-        else:
-            tsize = (800, 600)
-        # resize ratio -> 600x600
+        tsize = (600, 600)
+        # resize ratio -> target size
         ratio_w = (chip[2] - chip[0]) / tsize[0]
         ratio_h = (chip[3] - chip[1]) / tsize[1]
         
@@ -195,6 +188,7 @@ def write_chip_and_anno(image, imgid,
                         gt[2] / ratio_w,
                         gt[3] / ratio_h])
         bbox = np.array(bbox, dtype=np.int)
+
         dom = make_xml(chip, bbox, chip_label_list[i], img_name, tsize)
 
         cv2.imwrite(os.path.join(image_dir, img_name), chip_img)
@@ -225,26 +219,17 @@ def generate_imgset(train_list):
     with open(os.path.join(list_dir, 'train.txt'), 'w') as f:
         f.writelines([x + '\n' for x in train_list])
 
-numTag = 0
-lock = Lock()
-def _progress():
-    global numTag
-    with lock:
-        numTag += 1
-        sys.stdout.write('\r{0}'.format(str(numTag)))
-        sys.stdout.flush()
-
 def _worker(imgid, label_df):
     try:
         image = cv2.imread(os.path.join(src_traindir, imgid+'.jpg'))
         gt_boxes, labels = get_box_label(label_df, imgid+'.jpg')
+
         chip_list, chip_gt_list, chip_label_list = chip_v2(image, gt_boxes, labels)
         write_chip_and_anno(image, imgid, chip_list, chip_gt_list, chip_label_list)
         return len(chip_list)
         # _progress()
     except Exception:
         traceback.print_exc()
-        print(imgid)
         os._exit(0) 
 
 def main():
@@ -263,30 +248,16 @@ def main():
     df = pd.read_csv(src_annotation)
 
     train_chip_ids = []
-    for img_id in train_list:
-        print(img_id)
+    for i, img_id in enumerate(train_list):
+        sys.stdout.write('\rsearch: {:d}/{:d} {:s}'
+                        .format(i + 1, len(train_list), train_list[i]))
+        sys.stdout.flush()
+
         chiplen = _worker(img_id, df)
         for i in range(chiplen):
             train_chip_ids.append('%s_%s' % (img_id, i))
     
     generate_imgset(train_chip_ids)
-    
-    
-    # box = np.vstack(train_chip_ids)
-    # width = box[:, 2] - box[:, 0]
-    # width.sort()
-    # import matplotlib.pyplot as plt
-    # plt.plot(list(range(len(width))), width)
-    # plt.show()
-
-    
-    # with open(os.path.join(list_dir, 'train.txt'), 'r') as f:
-    #     chip = [x.split('_')[0] for x in f.readlines()]
-    # with open(train_ids, 'r') as f:
-    #     img = [x.strip() for x in f.readlines()]
-    # for x in img:
-    #     if x not in chip:
-    #         print(x)
 
 if __name__ == '__main__':
     main()

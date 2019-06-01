@@ -78,35 +78,43 @@ def main():
         box_w = box[2] - box[0]
         box_h = box[3] - box[1]
 
-        if max(box_w, box_h) < 30:
-            ratio = 5
+        if max(box_w, box_h) < 25:
+            ratio_list = [4.5, 4.8, 5.2, 5.5]
+        elif max(box_w, box_h) < 28:
+            ratio_list = [4.5, 4.8, 5.2, 5.5] 
+        elif max(box_w, box_h) < 100:
+            ratio_list = [3.5, 3.8, 4.2, 4.5]
         else:
-            ratio = 3.5
+            ratio_list = [3.5, 3.8, 4.2]
 
-        region_w = max(box_w, box_h) * ratio
-        region_h = region_w
-        center_x = box[0] + box_w / 2.0
-        center_y = box[1] + box_h / 2.0
-        region = [center_x - region_w / 2, 
-                  center_y - region_h / 2,
-                  center_x + region_w / 2,
-                  center_y + region_h / 2]
-        shift_x = max(0, 0 - region[0]) + min(0, 3200 - 1 - region[2])
-        shift_y = max(0, 0 - region[1]) + min(0, 1800 - 1 - region[3])
-        chip = [region[0] + shift_x,
-                region[1] + shift_y,
-                region[2] + shift_x,
-                region[3] + shift_y]
-        chip = [int(x) for x in chip]
+        chip_list = []
+        for ratio in ratio_list:
+            region_w = max(box_w, box_h) * ratio
+            region_h = region_w
+            center_x = box[0] + box_w / 2.0
+            center_y = box[1] + box_h / 2.0
+            region = [center_x - region_w / 2, 
+                    center_y - region_h / 2,
+                    center_x + region_w / 2,
+                    center_y + region_h / 2]
+            shift_x = max(0, 0 - region[0]) + min(0, 3200 - 1 - region[2])
+            shift_y = max(0, 0 - region[1]) + min(0, 1800 - 1 - region[3])
+            chip = [region[0] + shift_x,
+                    region[1] + shift_y,
+                    region[2] + shift_x,
+                    region[3] + shift_y]
+            chip = [int(x) for x in chip]
+            chip_list.append(chip)
 
         origin_img = cv2.imread(os.path.join(src_testdir, '%s.jpg'%imgid))
-        chip_img = origin_img[chip[1]:chip[3], chip[0]:chip[2], :].copy()
-        chip_name = '%s_%d' % (imgid, 0)
-        cv2.imwrite(os.path.join(image_dir, '%s.jpg'%chip_name), chip_img)
-        chip_name_list.append(chip_name)
+        for i, chip in enumerate(chip_list):
+            chip_img = origin_img[chip[1]:chip[3], chip[0]:chip[2], :].copy()
+            chip_name = '%s_%d' % (imgid, i)
+            cv2.imwrite(os.path.join(image_dir, '%s.jpg'%chip_name), chip_img)
+            chip_name_list.append(chip_name)
 
-        chip_info = {'loc': chip}
-        chip_loc[chip_name] = chip_info
+            chip_info = {'loc': chip}
+            chip_loc[chip_name] = chip_info
 
     # write test txt
     with open(os.path.join(list_dir, 'test.txt'), 'w') as f:
