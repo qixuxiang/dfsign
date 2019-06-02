@@ -1,4 +1,7 @@
 ## 原作者是[Yifu Chen](https://github.com/ixhorse/)，该仓库版权属于Yifu Chen。
+
+### 打个广告：算力充足的大佬可以跑跑SENet-154的backbone，给大伙贡献个coco预训练模型，功在当代，利在千秋啊！地址请戳[mmdetection_with_SENet154](https://github.com/qixuxiang/mmdetection_with_SENet154)。
+
 ### requirements
 ```
 python=3.7
