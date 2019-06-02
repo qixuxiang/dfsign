@@ -2,6 +2,11 @@
 
 ### 打个广告：算力充足的大佬可以跑跑mmdetection的SENet-154的backbone，给大伙贡献个coco预训练模型，功在当代，利在千秋啊！地址请戳[mmdetection_with_SENet154](https://github.com/qixuxiang/mmdetection_with_SENet154)。
 
+# datafountain sign detection
+
+**分割->抠图->检测**
+
+
 ### requirements
 ```
 python=3.7
@@ -58,13 +63,14 @@ python setup.py develop
 ``` bash
 cd $WORKDIR/tools
 # generate segmentation dataset
-python convert2voc.py
+python convert2voc.py train_test
 # generate detection trainset
 python generate_train_chip.py
 ```
 
 ### 训练
-pass
+
+使用deeplab和mmdetection中cascade
 
 ### 测试
 ``` bash
