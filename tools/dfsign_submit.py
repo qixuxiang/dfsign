@@ -6,6 +6,7 @@ import os
 import sys
 import json
 import glob
+import argparse
 import pandas as pd
 import numpy as np
 import utils
@@ -31,6 +32,11 @@ detect_json = os.path.join(home,
                         # 'working/dfsign/faster-rcnn.pytorch/output/results.json')
 
 def main():
+    parser = argparse.ArgumentParser(description="dfsign submit")
+    parser.add_argument('outname', type=str, default='predict',
+                        help='outname (default: predict)')
+    args = parser.parse_args()
+    
     # read chip loc
     with open(loc_json, 'r') as f:
         chip_loc = json.load(f)
@@ -83,7 +89,7 @@ def main():
     
     columns = ['filename','X1','Y1','X2','Y2','X3','Y3','X4','Y4','type', 'score']
     df = pd.DataFrame(filter_results, columns=columns)
-    df.to_csv('predict.csv', index=False)
+    df.to_csv(args.outname + '.csv', index=False)
 
     
 

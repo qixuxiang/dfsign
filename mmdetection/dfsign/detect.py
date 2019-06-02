@@ -27,6 +27,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='MMDet test detector')
     parser.add_argument('config', help='test config file path')
     parser.add_argument('checkpoint', help='checkpoint file')
+    parser.add_argument('--chip', action='store_true', help='which test set')
     parser.add_argument('--show', action='store_true', help='show results')
     args = parser.parse_args()
     return args
@@ -82,7 +83,7 @@ def main():
     model = MMDataParallel(model, device_ids=[0])
 
     dfsign = True
-    chip = False
+    chip = args.chip
     # get image list
     if dfsign:
         if chip:
