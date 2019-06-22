@@ -6,6 +6,7 @@
 
 **分割->抠图->检测**
 
+**比赛定位精度要求太高，关键还是使用cascade+更好的backbone，前几大佬基本都用了4个cascade头+cvpr19-HRNet，另外加上GIoU-loss和KL-loss应该有可观提升。** 
 
 ### requirements
 ```
