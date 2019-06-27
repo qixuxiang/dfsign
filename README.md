@@ -10,7 +10,7 @@
 
 ### requirements
 ```
-python=3.7
+    python>=3.6
     numpy
     pandas
     opencv-python
